@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <rect width="1200" height="600" fill="#059669"/>
+  <rect width="1200" height="150" y="450" fill="#065F46"/>
+  <circle cx="900" cy="120" r="60" fill="#FDE047"/>
+  <rect width="300" height="200" x="150" y="150" rx="15" fill="#FFFFFF" opacity="0.9"/>
+  <text x="300" y="200" text-anchor="middle" fill="#065F46" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Flood Relief</text>
+  <text x="300" y="230" text-anchor="middle" fill="#065F46" font-family="Arial, sans-serif" font-size="14">Supporting Farmers</text>
+  <text x="300" y="260" text-anchor="middle" fill="#065F46" font-family="Arial, sans-serif" font-size="14">Rebuilding Lives</text>
+  <rect width="150" height="60" x="225" y="290" rx="30" fill="#DC2626"/>
+  <text x="300" y="330" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Donate</text>
+</svg>

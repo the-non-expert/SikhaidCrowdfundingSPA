@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <rect width="1200" height="600" fill="#3B82F6"/>
+  <rect width="1200" height="200" y="400" fill="#1E40AF"/>
+  <circle cx="300" cy="150" r="80" fill="#FCD34D"/>
+  <rect width="400" height="120" x="400" y="200" rx="10" fill="#FFFFFF" opacity="0.9"/>
+  <text x="600" y="240" text-anchor="middle" fill="#1E40AF" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Punjab Relief</text>
+  <text x="600" y="270" text-anchor="middle" fill="#1E40AF" font-family="Arial, sans-serif" font-size="16">Helping Communities</text>
+  <rect width="200" height="80" x="500" y="350" rx="40" fill="#10B981"/>
+  <text x="600" y="400" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Contribute</text>
+</svg>
