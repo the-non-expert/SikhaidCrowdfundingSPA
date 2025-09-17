@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
 	interface CampaignHeaderProps {
 		title?: string;
 		organizer?: string;
@@ -7,22 +9,72 @@
 		raised?: number;
 	}
 
+	interface CampaignStats {
+		campaign: string;
+		total_amount: number;
+		donation_count: number;
+		target: number;
+		progress_percentage: number;
+		last_updated: string;
+	}
+
 	let {
 		title = 'Help Rebuild Homes in Punjab',
 		organizer = 'SikhAid India',
 		organizerUrl = 'https://sikhaidindia.com',
-		target = 10000000,
-		raised = 3115067
+		target = 3000000,
+		raised = 0
 	}: CampaignHeaderProps = $props();
 
+	let campaignStats = $state<CampaignStats | null>(null);
+	let isLoadingStats = $state(true);
+	let statsError = $state<string | null>(null);
+
+	// Use dynamic stats if available, otherwise fall back to props
+	const actualRaised = $derived(campaignStats?.total_amount ?? raised);
+	const actualTarget = $derived(campaignStats?.target ?? target);
+	const donationCount = $derived(campaignStats?.donation_count ?? 0);
+
+	async function fetchCampaignStats() {
+		try {
+			isLoadingStats = true;
+			statsError = null;
+
+			const response = await fetch('/.netlify/functions/get-campaign-stats');
+
+			if (!response.ok) {
+				throw new Error(`Failed to fetch stats: ${response.status}`);
+			}
+
+			const data = await response.json();
+
+			if (data.success && data.data) {
+				campaignStats = data.data;
+				console.log('📊 Campaign stats loaded:', campaignStats);
+			} else {
+				throw new Error('Invalid stats response');
+			}
+		} catch (error) {
+			console.error('❌ Error fetching campaign stats:', error);
+			statsError = 'Failed to load latest stats';
+			// Keep using fallback values (props)
+		} finally {
+			isLoadingStats = false;
+		}
+	}
+
+	onMount(() => {
+		fetchCampaignStats();
+	});
+
 	function shareWhatsApp() {
-		const text = encodeURIComponent(`Help Rebuild Punjab - Emergency Relief Fund\n\nEvery donation helps rebuild lives and brings hope to flood-affected families.\n\nhttps://rebuildpunjab.sikhaid.com`);
+		const text = encodeURIComponent(`Help Rebuild Punjab - Emergency Relief Fund\n\nEvery donation helps rebuild lives and brings hope to flood-affected families.\n\nhttps://rebuildpunjab.sikhaidindia.com`);
 		window.open(`https://wa.me/?text=${text}`, '_blank');
 	}
 
 	function spreadTheWord() {
 		const text = encodeURIComponent('Help Rebuild Punjab - Emergency Relief Fund');
-		const url = encodeURIComponent('https://rebuildpunjab.sikhaid.com');
+		const url = encodeURIComponent('https://rebuildpunjab.sikhaidindia.com');
 		window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`, '_blank');
 	}
 </script>
@@ -72,16 +124,36 @@
 
 		<!-- Fundraising Progress -->
 		<div class="text-center">
-			<div class="text-3xl font-bold text-teal-600 mb-1">₹{raised.toLocaleString('en-IN')}</div>
-			<div class="text-gray-600 text-sm mb-4">raised out of ₹{target.toLocaleString('en-IN')}</div>
+			{#if isLoadingStats}
+				<div class="text-3xl font-bold text-gray-400 mb-1 animate-pulse">Loading...</div>
+				<div class="text-gray-400 text-sm mb-4">Fetching latest stats...</div>
+			{:else}
+				<div class="text-3xl font-bold text-teal-600 mb-1">₹{actualRaised.toLocaleString('en-IN')}</div>
+				<div class="text-gray-600 text-sm mb-4">
+					raised out of ₹{actualTarget.toLocaleString('en-IN')}
+					{#if donationCount > 0}
+						<span class="text-gray-500">• {donationCount} donations</span>
+					{/if}
+				</div>
+			{/if}
+
+			{#if statsError}
+				<div class="text-xs text-amber-600 mb-2">⚠️ {statsError}</div>
+			{/if}
 
 			<!-- Progress Bar -->
 			<div class="w-full bg-gray-200 rounded-full h-2">
 				<div
 					class="bg-teal-500 h-2 rounded-full transition-all duration-1000 ease-out"
-					style="width: {Math.min((raised / target) * 100, 100)}%"
+					style="width: {Math.min((actualRaised / actualTarget) * 100, 100)}%"
 				></div>
 			</div>
+
+			{#if campaignStats?.last_updated}
+				<div class="text-xs text-gray-500 mt-2">
+					Last updated: {new Date(campaignStats.last_updated).toLocaleString('en-IN')}
+				</div>
+			{/if}
 		</div>
 	</div>
 </section>

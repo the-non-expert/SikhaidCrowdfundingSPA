@@ -1,8 +1,35 @@
 <script lang="ts">
 	let donationAmount = $state('');
 	let fullName = $state('');
+	let donorEmail = $state('');
+	let donorPhone = $state('');
+	let isProcessing = $state(false);
 
-	function handleDonate() {
+	// TypeScript interface for Razorpay
+	interface RazorpayOptions {
+		key: string;
+		amount: number;
+		currency: string;
+		name: string;
+		description: string;
+		order_id: string;
+		handler: (response: any) => void;
+		prefill: {
+			name: string;
+			email?: string;
+			contact?: string;
+		};
+		notes: Record<string, string>;
+		theme: {
+			color: string;
+		};
+		modal: {
+			ondismiss: () => void;
+		};
+	}
+
+
+	async function handleDonate() {
 		// Basic validation
 		if (!donationAmount || parseFloat(donationAmount) < 10) {
 			alert('Please enter a minimum donation amount of ₹10');
@@ -13,9 +40,83 @@
 			return;
 		}
 
-		// Here you would integrate with Razorpay
-		console.log('Donation details:', { amount: donationAmount, name: fullName });
-		alert('Donation functionality will be integrated with Razorpay payment gateway');
+		try {
+			isProcessing = true;
+
+			// Call our Netlify function to create Razorpay order
+			const response = await fetch('/.netlify/functions/create-order', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					amount: parseFloat(donationAmount),
+					name: fullName,
+					email: donorEmail,
+					phone: donorPhone
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to create order: ${response.status}`);
+			}
+
+			const orderData = await response.json();
+
+			if (!orderData.success) {
+				throw new Error(orderData.error || 'Failed to create payment order');
+			}
+
+			// Initialize Razorpay checkout
+			const options: RazorpayOptions = {
+				key: orderData.razorpay_key_id,
+				amount: orderData.order.amount,
+				currency: orderData.order.currency,
+				name: orderData.campaign_info.name,
+				description: `Donation for ${orderData.campaign_info.name}`,
+				order_id: orderData.order.id,
+				handler: function (response: any) {
+					// Payment successful
+					console.log('Payment successful:', response);
+					alert(`Thank you ${fullName}! Your donation of ₹${donationAmount} has been processed successfully. Payment ID: ${response.razorpay_payment_id}`);
+
+					// Reset form
+					donationAmount = '';
+					fullName = '';
+					donorEmail = '';
+					donorPhone = '';
+					isProcessing = false;
+				},
+				prefill: {
+					name: fullName,
+					email: donorEmail,
+					contact: donorPhone
+				},
+				notes: {
+					campaign: 'youtuber_rebuild_punjab',
+					source: 'donation_form',
+					donor_name: fullName
+				},
+				theme: {
+					color: '#7c3aed'
+				},
+				modal: {
+					ondismiss: function () {
+						console.log('Checkout form closed by user');
+						isProcessing = false;
+					}
+				}
+			};
+
+			const razorpay = new (window as any).Razorpay(options);
+			razorpay.open();
+
+		} catch (error) {
+			console.error('Error processing donation:', error);
+			const errorMessage = error instanceof Error ? error.message : 'Please try again';
+			alert(`Error processing donation: ${errorMessage}`);
+			isProcessing = false;
+		}
 	}
 </script>
 
@@ -28,7 +129,7 @@
 			</div>
 
 			<!-- Donation Form -->
-			<form on:submit|preventDefault={handleDonate} class="space-y-6">
+			<form onsubmit={(e) => { e.preventDefault(); handleDonate(); }} class="space-y-6">
 				<!-- Donation Amount -->
 				<div>
 					<label for="amount" class="block text-sm font-medium text-gray-700 mb-2 text-center">
@@ -45,6 +146,7 @@
 							placeholder="0"
 							class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg"
 							required
+							disabled={isProcessing}
 						/>
 					</div>
 					<p class="text-xs text-gray-500 text-center mt-1">Minimum amount: ₹10</p>
@@ -62,15 +164,53 @@
 						placeholder="Enter your full name"
 						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
 						required
+						disabled={isProcessing}
 					/>
+				</div>
+
+				<!-- Email (Optional) -->
+				<div>
+					<label for="donorEmail" class="block text-sm font-medium text-gray-700 mb-2 text-center">
+						Email (Optional)
+					</label>
+					<input
+						id="donorEmail"
+						type="email"
+						bind:value={donorEmail}
+						placeholder="Enter your email"
+						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+						disabled={isProcessing}
+					/>
+					<p class="text-xs text-gray-500 text-center mt-1">For donation receipt</p>
+				</div>
+
+				<!-- Phone (Optional) -->
+				<div>
+					<label for="donorPhone" class="block text-sm font-medium text-gray-700 mb-2 text-center">
+						Phone (Optional)
+					</label>
+					<input
+						id="donorPhone"
+						type="tel"
+						bind:value={donorPhone}
+						placeholder="Enter your phone number"
+						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+						disabled={isProcessing}
+					/>
+					<p class="text-xs text-gray-500 text-center mt-1">For payment updates</p>
 				</div>
 
 				<!-- Donate Button -->
 				<button
 					type="submit"
-					class="w-full bg-purple-700 hover:bg-purple-800 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg"
+					disabled={isProcessing}
+					class="w-full bg-purple-700 hover:bg-purple-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg"
 				>
-					Donate Now
+					{#if isProcessing}
+						Processing...
+					{:else}
+						Donate Now
+					{/if}
 				</button>
 			</form>
 
