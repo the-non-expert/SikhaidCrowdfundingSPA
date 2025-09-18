@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+
 	let donationAmount = $state('');
 	let fullName = $state('');
 	let donorEmail = $state('');
@@ -76,9 +78,8 @@
 				description: `Donation for ${orderData.campaign_info.name}`,
 				order_id: orderData.order.id,
 				handler: function (response: any) {
-					// Payment successful
+					// Payment successful - redirect to success page
 					console.log('Payment successful:', response);
-					alert(`Thank you ${fullName}! Your donation of ₹${donationAmount} has been processed successfully. Payment ID: ${response.razorpay_payment_id}`);
 
 					// Reset form
 					donationAmount = '';
@@ -86,6 +87,10 @@
 					donorEmail = '';
 					donorPhone = '';
 					isProcessing = false;
+
+					// Redirect to success page with payment details
+					const successUrl = `/success?payment_id=${response.razorpay_payment_id}&donor_name=${encodeURIComponent(fullName)}&amount=${donationAmount}`;
+					goto(successUrl);
 				},
 				prefill: {
 					name: fullName,
