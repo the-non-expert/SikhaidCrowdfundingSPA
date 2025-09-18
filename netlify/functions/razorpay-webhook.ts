@@ -41,7 +41,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
         environment: {
           webhook_secret_configured: !!webhookSecret
         },
-        supported_events: ['payment.captured', 'payment.failed'],
+        supported_events: ['payment.captured', 'payment.authorized', 'payment.failed'],
         note: 'This endpoint is ready to receive Razorpay webhook notifications'
       })
     };
@@ -114,10 +114,11 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     console.log('📦 Event type:', payload.event);
 
     // Handle successful payment events
-    if (payload.event === 'payment.captured') {
+    if (payload.event === 'payment.captured' || payload.event === 'payment.authorized') {
       const payment = payload.payload.payment.entity;
-      
-      console.log('💳 Payment captured:', {
+      const eventType = payload.event === 'payment.captured' ? 'captured' : 'authorized';
+
+      console.log(`💳 Payment ${eventType}:`, {
         id: payment.id,
         order_id: payment.order_id,
         amount: payment.amount,
@@ -128,9 +129,9 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
       // Check if this is a YouTuber campaign payment
       const isYoutuberCampaign = checkIfYoutuberPayment(payment);
-      
+
       if (isYoutuberCampaign.isYoutuber) {
-        console.log('🎯 YouTuber campaign payment detected!', {
+        console.log(`🎯 YouTuber campaign payment ${eventType}!`, {
           source: isYoutuberCampaign.source,
           amount: payment.amount / 100, // Convert to INR
           donor: payment.notes?.donor_name || payment.email || 'Anonymous'
@@ -152,16 +153,16 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
           trackingReceipt: payment.notes?.tracking_receipt
         };
 
-        console.log('✅ YouTuber donation recorded:', donationRecord);
+        console.log(`✅ YouTuber donation ${eventType}:`, donationRecord);
 
         // Store individual donation record
         await storeDonationRecord(donationRecord);
 
         // Update campaign statistics
         await updateCampaignStats(donationRecord);
-        
+
       } else {
-        console.log('ℹ️ Non-YouTuber campaign payment - ignoring', {
+        console.log(`ℹ️ Non-YouTuber campaign payment ${eventType} - ignoring`, {
           reason: isYoutuberCampaign.reason,
           notes: payment.notes
         });
@@ -169,7 +170,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
     } else if (payload.event === 'payment.failed') {
       console.log('❌ Payment failed:', payload.payload.payment.entity.id);
-      
+
     } else {
       console.log('ℹ️ Unhandled event type:', payload.event);
     }
