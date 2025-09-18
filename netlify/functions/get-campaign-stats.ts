@@ -79,12 +79,11 @@ async function getCampaignStats(): Promise<CampaignStats> {
     });
     const statsKey = CAMPAIGN_ID;
 
-    const statsBlob = await statsStore.get(statsKey);
+    const stats = await statsStore.get(statsKey, { type: 'json' });
 
-    if (statsBlob) {
-      const stats: CampaignStats = JSON.parse(await statsBlob.text());
+    if (stats) {
       console.log('📊 Found existing campaign stats in blob storage');
-      return stats;
+      return stats as CampaignStats;
     } else {
       // No stats found, return initial stats
       console.log('📊 No existing stats found, returning initial state');

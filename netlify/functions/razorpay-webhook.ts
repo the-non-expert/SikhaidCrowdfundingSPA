@@ -264,9 +264,9 @@ async function updateCampaignStats(newDonation: DonationRecord): Promise<void> {
     // Get current stats or create new ones
     let currentStats: CampaignStats;
     try {
-      const existingStatsBlob = await statsStore.get(statsKey);
-      if (existingStatsBlob) {
-        currentStats = JSON.parse(await existingStatsBlob.text());
+      const existingStats = await statsStore.get(statsKey, { type: 'json' });
+      if (existingStats) {
+        currentStats = existingStats as CampaignStats;
       } else {
         throw new Error('No existing stats');
       }
