@@ -72,7 +72,11 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 // Helper function to retrieve campaign statistics from blob storage
 async function getCampaignStats(): Promise<CampaignStats> {
   try {
-    const statsStore = getStore(BLOB_STORES.STATS);
+    const statsStore = getStore({
+      name: BLOB_STORES.STATS,
+      siteID: process.env.NETLIFY_SITE_ID!,
+      token: process.env.NETLIFY_ACCESS_TOKEN!
+    });
     const statsKey = CAMPAIGN_ID;
 
     const statsBlob = await statsStore.get(statsKey);
@@ -94,7 +98,12 @@ async function getCampaignStats(): Promise<CampaignStats> {
       };
 
       // Store initial stats for future use
-      await statsStore.set(statsKey, JSON.stringify(initialStats), {
+      const initialStatsStore = getStore({
+        name: BLOB_STORES.STATS,
+        siteID: process.env.NETLIFY_SITE_ID!,
+        token: process.env.NETLIFY_ACCESS_TOKEN!
+      });
+      await initialStatsStore.set(statsKey, JSON.stringify(initialStats), {
         metadata: {
           total_amount: '0',
           donation_count: '0',
@@ -106,16 +115,7 @@ async function getCampaignStats(): Promise<CampaignStats> {
     }
   } catch (error) {
     console.error('❌ Error retrieving campaign stats from blob storage:', error);
-
-    // Fallback to initial stats if blob storage fails
-    return {
-      campaign: CAMPAIGN_ID,
-      total_amount: 0,
-      donation_count: 0,
-      target: CAMPAIGN_TARGET,
-      progress_percentage: 0,
-      last_updated: new Date().toISOString()
-    };
+    throw error;
   }
 }
 

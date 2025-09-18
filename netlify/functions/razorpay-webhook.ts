@@ -228,7 +228,11 @@ function checkIfYoutuberPayment(payment: any): { isYoutuber: boolean; source?: s
 // Helper function to store individual donation record
 async function storeDonationRecord(donation: DonationRecord): Promise<void> {
   try {
-    const donationsStore = getStore(BLOB_STORES.DONATIONS);
+    const donationsStore = getStore({
+      name: BLOB_STORES.DONATIONS,
+      siteID: process.env.NETLIFY_SITE_ID!,
+      token: process.env.NETLIFY_ACCESS_TOKEN!
+    });
     const donationKey = `${donation.timestamp}_${donation.paymentId}`;
 
     await donationsStore.set(donationKey, JSON.stringify(donation), {
@@ -250,7 +254,11 @@ async function storeDonationRecord(donation: DonationRecord): Promise<void> {
 // Helper function to update campaign statistics
 async function updateCampaignStats(newDonation: DonationRecord): Promise<void> {
   try {
-    const statsStore = getStore(BLOB_STORES.STATS);
+    const statsStore = getStore({
+      name: BLOB_STORES.STATS,
+      siteID: process.env.NETLIFY_SITE_ID!,
+      token: process.env.NETLIFY_ACCESS_TOKEN!
+    });
     const statsKey = CAMPAIGN_ID;
 
     // Get current stats or create new ones
@@ -282,7 +290,12 @@ async function updateCampaignStats(newDonation: DonationRecord): Promise<void> {
     currentStats.last_donation_timestamp = newDonation.timestamp;
 
     // Store updated stats
-    await statsStore.set(statsKey, JSON.stringify(currentStats), {
+    const updateStatsStore = getStore({
+      name: BLOB_STORES.STATS,
+      siteID: process.env.NETLIFY_SITE_ID!,
+      token: process.env.NETLIFY_ACCESS_TOKEN!
+    });
+    await updateStatsStore.set(statsKey, JSON.stringify(currentStats), {
       metadata: {
         total_amount: currentStats.total_amount.toString(),
         donation_count: currentStats.donation_count.toString(),
