@@ -29,5 +29,8 @@
 	"main": "svelte.config.js",
 	"keywords": [],
 	"author": "Ayush Jhunjhunwala",
-	"license": "ISC"
+	"license": "ISC",
+	"dependencies": {
+		"@netlify/blobs": "^10.0.10"
+	}
 }

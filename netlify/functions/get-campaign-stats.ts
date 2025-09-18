@@ -1,13 +1,6 @@
 import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
-
-interface CampaignStats {
-  campaign: string;
-  total_amount: number;
-  donation_count: number;
-  target: number;
-  progress_percentage: number;
-  last_updated: string;
-}
+import { getStore } from '@netlify/blobs';
+import { CampaignStats, BLOB_STORES, CAMPAIGN_ID, CAMPAIGN_TARGET } from './types';
 
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
   // CORS headers
@@ -37,22 +30,15 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
   }
 
   try {
-    console.log('📊 Fetching campaign statistics');
+    console.log('📊 Fetching campaign statistics from blob storage');
 
-    // Mock data structure - will be replaced with real KV storage later
-    const mockStats: CampaignStats = {
-      campaign: 'youtuber_rebuild_punjab',
-      total_amount: 50000, // Mock amount in INR
-      donation_count: 25,
-      target: 3000000, // ₹30,00,000 target
-      progress_percentage: 1.67, // 50000/3000000 * 100
-      last_updated: new Date().toISOString()
-    };
+    // Get campaign statistics from Netlify Blobs
+    const campaignStats = await getCampaignStats();
 
     console.log('📊 Campaign stats retrieved:', {
-      total: mockStats.total_amount,
-      count: mockStats.donation_count,
-      progress: mockStats.progress_percentage
+      total: campaignStats.total_amount,
+      count: campaignStats.donation_count,
+      progress: campaignStats.progress_percentage.toFixed(2) + '%'
     });
 
     return {
@@ -60,10 +46,10 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       headers,
       body: JSON.stringify({
         success: true,
-        data: mockStats,
+        data: campaignStats,
         meta: {
-          source: 'mock_data',
-          note: 'This is mock data. Real-time stats will be implemented with webhook integration.',
+          source: 'netlify_blobs',
+          note: 'Real-time campaign statistics from webhook data.',
           domain: 'rebuildpunjab.sikhaidindia.com',
           organizer: 'SikhAid India'
         }
@@ -82,5 +68,55 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     };
   }
 };
+
+// Helper function to retrieve campaign statistics from blob storage
+async function getCampaignStats(): Promise<CampaignStats> {
+  try {
+    const statsStore = getStore(BLOB_STORES.STATS);
+    const statsKey = CAMPAIGN_ID;
+
+    const statsBlob = await statsStore.get(statsKey);
+
+    if (statsBlob) {
+      const stats: CampaignStats = JSON.parse(await statsBlob.text());
+      console.log('📊 Found existing campaign stats in blob storage');
+      return stats;
+    } else {
+      // No stats found, return initial stats
+      console.log('📊 No existing stats found, returning initial state');
+      const initialStats: CampaignStats = {
+        campaign: CAMPAIGN_ID,
+        total_amount: 0,
+        donation_count: 0,
+        target: CAMPAIGN_TARGET,
+        progress_percentage: 0,
+        last_updated: new Date().toISOString()
+      };
+
+      // Store initial stats for future use
+      await statsStore.set(statsKey, JSON.stringify(initialStats), {
+        metadata: {
+          total_amount: '0',
+          donation_count: '0',
+          last_updated: initialStats.last_updated
+        }
+      });
+
+      return initialStats;
+    }
+  } catch (error) {
+    console.error('❌ Error retrieving campaign stats from blob storage:', error);
+
+    // Fallback to initial stats if blob storage fails
+    return {
+      campaign: CAMPAIGN_ID,
+      total_amount: 0,
+      donation_count: 0,
+      target: CAMPAIGN_TARGET,
+      progress_percentage: 0,
+      last_updated: new Date().toISOString()
+    };
+  }
+}
 
 export { handler };

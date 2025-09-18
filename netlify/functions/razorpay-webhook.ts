@@ -1,26 +1,7 @@
 import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import crypto from 'crypto';
-
-interface RazorpayWebhookPayload {
-  event: string;
-  payload: {
-    payment: {
-      entity: {
-        id: string;
-        order_id: string;
-        amount: number;
-        currency: string;
-        status: string;
-        method: string;
-        email?: string;
-        contact?: string;
-        notes?: Record<string, string>;
-        created_at: number;
-        fee?: number;
-      };
-    };
-  };
-}
+import { getStore } from '@netlify/blobs';
+import { DonationRecord, CampaignStats, RazorpayWebhookPayload, BLOB_STORES, CAMPAIGN_ID, CAMPAIGN_TARGET } from './types';
 
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
   // CORS headers
@@ -155,21 +136,29 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
           donor: payment.notes?.donor_name || payment.email || 'Anonymous'
         });
 
-        // TODO: Store in Netlify KV here
-        // For now, just log the payment
-        const donationRecord = {
+        // Store donation in Netlify Blobs
+        const donationRecord: DonationRecord = {
           paymentId: payment.id,
           orderId: payment.order_id,
           amount: payment.amount / 100, // Convert to INR
           donorName: payment.notes?.donor_name || payment.email || 'Anonymous',
           donorEmail: payment.notes?.donor_email || payment.email || '',
+          donorPhone: payment.notes?.donor_phone || payment.contact || '',
           method: payment.method,
           timestamp: new Date().toISOString(),
-          campaign: 'youtuber_rebuild_punjab',
-          source: isYoutuberCampaign.source
+          campaign: CAMPAIGN_ID,
+          source: isYoutuberCampaign.source,
+          fee: payment.fee ? payment.fee / 100 : undefined,
+          trackingReceipt: payment.notes?.tracking_receipt
         };
 
         console.log('✅ YouTuber donation recorded:', donationRecord);
+
+        // Store individual donation record
+        await storeDonationRecord(donationRecord);
+
+        // Update campaign statistics
+        await updateCampaignStats(donationRecord);
         
       } else {
         console.log('ℹ️ Non-YouTuber campaign payment - ignoring', {
@@ -234,6 +223,83 @@ function checkIfYoutuberPayment(payment: any): { isYoutuber: boolean; source?: s
     isYoutuber: false, 
     reason: 'No matching YouTuber campaign identifiers found'
   };
+}
+
+// Helper function to store individual donation record
+async function storeDonationRecord(donation: DonationRecord): Promise<void> {
+  try {
+    const donationsStore = getStore(BLOB_STORES.DONATIONS);
+    const donationKey = `${donation.timestamp}_${donation.paymentId}`;
+
+    await donationsStore.set(donationKey, JSON.stringify(donation), {
+      metadata: {
+        campaign: donation.campaign,
+        amount: donation.amount.toString(),
+        timestamp: donation.timestamp,
+        paymentId: donation.paymentId
+      }
+    });
+
+    console.log('💾 Donation stored in blob:', donationKey);
+  } catch (error) {
+    console.error('❌ Error storing donation:', error);
+    throw error;
+  }
+}
+
+// Helper function to update campaign statistics
+async function updateCampaignStats(newDonation: DonationRecord): Promise<void> {
+  try {
+    const statsStore = getStore(BLOB_STORES.STATS);
+    const statsKey = CAMPAIGN_ID;
+
+    // Get current stats or create new ones
+    let currentStats: CampaignStats;
+    try {
+      const existingStatsBlob = await statsStore.get(statsKey);
+      if (existingStatsBlob) {
+        currentStats = JSON.parse(await existingStatsBlob.text());
+      } else {
+        throw new Error('No existing stats');
+      }
+    } catch {
+      // Create initial stats if none exist
+      currentStats = {
+        campaign: CAMPAIGN_ID,
+        total_amount: 0,
+        donation_count: 0,
+        target: CAMPAIGN_TARGET,
+        progress_percentage: 0,
+        last_updated: new Date().toISOString()
+      };
+    }
+
+    // Update stats with new donation
+    currentStats.total_amount += newDonation.amount;
+    currentStats.donation_count += 1;
+    currentStats.progress_percentage = Math.min((currentStats.total_amount / currentStats.target) * 100, 100);
+    currentStats.last_updated = new Date().toISOString();
+    currentStats.last_donation_timestamp = newDonation.timestamp;
+
+    // Store updated stats
+    await statsStore.set(statsKey, JSON.stringify(currentStats), {
+      metadata: {
+        total_amount: currentStats.total_amount.toString(),
+        donation_count: currentStats.donation_count.toString(),
+        last_updated: currentStats.last_updated
+      }
+    });
+
+    console.log('📊 Campaign stats updated:', {
+      total: currentStats.total_amount,
+      count: currentStats.donation_count,
+      progress: currentStats.progress_percentage.toFixed(2) + '%'
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating campaign stats:', error);
+    throw error;
+  }
 }
 
 export { handler };
