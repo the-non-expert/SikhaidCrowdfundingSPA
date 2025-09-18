@@ -90,6 +90,15 @@
 						>
 							Ayush
 						</a>
+						from
+						<a
+							href="https://www.pixelwebpages.com"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="text-blue-400 hover:text-blue-300 transition-colors font-medium"
+						>
+							Pixel Webpages
+						</a>
 					</div>
 				</div>
 			</div>

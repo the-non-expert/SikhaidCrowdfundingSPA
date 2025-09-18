@@ -169,8 +169,8 @@
 				</p>
 				<p class="text-sm">
 					For any queries, contact us at
-					<a href="mailto:support@sikhaidindia.com" class="text-blue-600 hover:underline">
-						support@sikhaidindia.com
+					<a href="mailto:sikhaidcharity@gmail.com" class="text-blue-600 hover:underline">
+						sikhaidcharity@gmail.com
 					</a>
 				</p>
 			</div>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import "../app.css";
 	import favicon from "$lib/assets/favicon.svg";
+	import WhatsAppButton from "$lib/components/WhatsAppButton.svelte";
 </script>
 
 <svelte:head>
@@ -9,4 +10,5 @@
 
 <main>
 	<slot />
+	<WhatsAppButton />
 </main>

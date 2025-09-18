@@ -81,6 +81,10 @@
 					// Payment successful - redirect to success page
 					console.log('Payment successful:', response);
 
+					// Store values before resetting form
+					const finalAmount = donationAmount;
+					const finalDonorName = fullName;
+
 					// Reset form
 					donationAmount = '';
 					fullName = '';
@@ -89,7 +93,7 @@
 					isProcessing = false;
 
 					// Redirect to success page with payment details
-					const successUrl = `/success?payment_id=${response.razorpay_payment_id}&donor_name=${encodeURIComponent(fullName)}&amount=${donationAmount}`;
+					const successUrl = `/success?payment_id=${response.razorpay_payment_id}&donor_name=${encodeURIComponent(finalDonorName)}&amount=${finalAmount}`;
 					goto(successUrl);
 				},
 				prefill: {
