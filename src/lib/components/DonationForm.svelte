@@ -121,15 +121,20 @@
 </script>
 
 <section id="donate" class="bg-white py-12">
-	<div class="max-w-md mx-auto px-4">
-		<div class="bg-white rounded-lg p-6 shadow-lg border">
-			<!-- Header -->
-			<div class="text-center mb-8">
-				<h2 class="text-2xl font-bold text-purple-700 mb-2">Contribute</h2>
-			</div>
+	<div class="max-w-6xl mx-auto px-4">
+		<!-- Header -->
+		<div class="text-center mb-8">
+			<h2 class="text-2xl font-bold text-purple-700 mb-2">Contribute</h2>
+		</div>
 
+		<!-- Main Container: Form + QR Code -->
+		<div class="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
 			<!-- Donation Form -->
-			<form onsubmit={(e) => { e.preventDefault(); handleDonate(); }} class="space-y-6">
+			<div class="flex-1">
+				<div class="bg-white rounded-lg p-6 shadow-lg border max-w-md mx-auto md:mx-0">
+
+					<!-- Donation Form -->
+					<form onsubmit={(e) => { e.preventDefault(); handleDonate(); }} class="space-y-6">
 				<!-- Donation Amount -->
 				<div>
 					<label for="amount" class="block text-sm font-medium text-gray-700 mb-2 text-center">
@@ -200,39 +205,102 @@
 					<p class="text-xs text-gray-500 text-center mt-1">For payment updates</p>
 				</div>
 
-				<!-- Donate Button -->
-				<button
-					type="submit"
-					disabled={isProcessing}
-					class="w-full bg-purple-700 hover:bg-purple-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg"
-				>
-					{#if isProcessing}
-						Processing...
-					{:else}
-						Donate Now
-					{/if}
-				</button>
-			</form>
+						<!-- Donate Button -->
+						<button
+							type="submit"
+							disabled={isProcessing}
+							class="w-full bg-purple-700 hover:bg-purple-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg"
+						>
+							{#if isProcessing}
+								Processing...
+							{:else}
+								Donate Now
+							{/if}
+						</button>
+					</form>
 
-			<!-- Security Info -->
-			<div class="mt-6 text-center">
-				<div class="flex items-center justify-center gap-2 mb-2">
-					<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-					</svg>
-					<span class="text-xs text-gray-600">Secure payment powered by Razorpay</span>
+					<!-- Security Info -->
+					<div class="mt-6 text-center">
+						<div class="flex items-center justify-center gap-2 mb-2">
+							<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+							</svg>
+							<span class="text-xs text-gray-600">Secure payment powered by Razorpay</span>
+						</div>
+						<p class="text-xs text-gray-500">Your payment information is encrypted and secure</p>
+					</div>
+
+					<!-- Payment Methods -->
+					<div class="mt-6">
+						<p class="text-sm text-gray-700 text-center mb-3">Secure payments powered by Razorpay:</p>
+						<div class="flex justify-center gap-4 text-xs">
+							<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded">UPI</span>
+							<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Cards</span>
+							<span class="bg-red-100 text-red-800 px-2 py-1 rounded">Net Banking</span>
+							<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">Wallets</span>
+						</div>
+					</div>
 				</div>
-				<p class="text-xs text-gray-500">Your payment information is encrypted and secure</p>
 			</div>
 
-			<!-- Payment Methods -->
-			<div class="mt-6">
-				<p class="text-sm text-gray-700 text-center mb-3">Secure payments powered by Razorpay:</p>
-				<div class="flex justify-center gap-4 text-xs">
-					<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded">UPI</span>
-					<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Cards</span>
-					<span class="bg-red-100 text-red-800 px-2 py-1 rounded">Net Banking</span>
-					<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">Wallets</span>
+			<!-- QR Code Section -->
+			<div class="flex-1">
+				<div class="bg-white rounded-lg p-6 shadow-lg border max-w-md mx-auto md:mx-0">
+					<div class="text-center">
+						<h3 class="text-xl font-bold text-purple-700 mb-4">Quick Payment</h3>
+						<p class="text-gray-600 mb-6">Scan QR code to pay instantly</p>
+
+						<!-- QR Code Image -->
+						<div class="flex justify-center mb-6">
+							<div class="bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300">
+								<img
+									src="/images/QrImage.jpeg"
+									alt="QR Code for Payment"
+									class="w-64 h-464 object-cover"
+								/>
+								<!-- Placeholder when image not found -->
+								<div class="hidden w-48 h-48 flex items-center justify-center text-gray-400 text-sm">
+									<div class="text-center">
+										<svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v14a2 2 0 002 2z" />
+										</svg>
+										<p>Place QR code image<br/>in static/images/qr-code.png</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Instructions -->
+						<div class="space-y-2 text-sm text-gray-600">
+							<div class="flex items-center gap-2">
+								<span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+								<span>Open any UPI app (GPay, PhonePe, Paytm)</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+								<span>Scan the QR code above</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+								<span>Enter your donation amount</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+								<span>Complete the payment</span>
+							</div>
+						</div>
+
+						<!-- QR Code Benefits -->
+						<div class="mt-6 p-4 bg-green-50 rounded-lg">
+							<div class="flex items-center gap-2 text-green-700 text-sm font-medium mb-2">
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+								</svg>
+								<span>Quick & Easy</span>
+							</div>
+							<p class="text-green-600 text-xs">No form filling required. Just scan and pay!</p>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
