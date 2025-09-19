@@ -83,7 +83,12 @@ async function getCampaignStats(): Promise<CampaignStats> {
 
     if (stats) {
       console.log('📊 Found existing campaign stats in blob storage');
-      return stats as CampaignStats;
+      const existingStats = stats as CampaignStats;
+      // Always use the current CAMPAIGN_TARGET from types.ts, not the stored target
+      return {
+        ...existingStats,
+        target: CAMPAIGN_TARGET
+      };
     } else {
       // No stats found, return initial stats
       console.log('📊 No existing stats found, returning initial state');
