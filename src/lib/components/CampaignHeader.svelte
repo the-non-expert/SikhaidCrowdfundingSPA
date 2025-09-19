@@ -22,7 +22,7 @@
 		title = 'Help Rebuild Homes in Punjab',
 		organizer = 'SikhAid India',
 		organizerUrl = 'https://sikhaidindia.com',
-		target = 3000000,
+		target = 1500000,
 		raised = 0
 	}: CampaignHeaderProps = $props();
 

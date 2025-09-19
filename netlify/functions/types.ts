@@ -53,4 +53,4 @@ export const BLOB_STORES = {
 } as const;
 
 export const CAMPAIGN_ID = 'youtuber_rebuild_punjab';
-export const CAMPAIGN_TARGET = 3000000; // ₹30,00,000
+export const CAMPAIGN_TARGET = 1500000; // ₹15,00,000
